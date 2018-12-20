@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</head>
+<body>
+    <header>
+        <img src="santa" class="logo" alt="">
+    </header>
+    <main class="center-align">
+        <form action="">
+            <div class="input-field">
+                <input type="text" id="name">
+                <label for="name">Ваше имя</label>
+            </div>
+            <div class="input-field">
+                <input type="password" id="password">
+                <label for="password">Секретный ключ</label>
+                <i class="material-icons grey-text" id="showpass">visibility</i>
+            </div>
+            <div class="errors"></div>
+            <button type="button" class="btn" id="send">Узнать получателя</button>
+        </form>
+        <div class="hidden">
+           <img src="loader.gif" alt="">
+           <p class="phrase">Ищем</p>
+           <div class="progress">
+              <div class="indeterminate"></div>
+           </div>
+        </div>
+        <div class="response">
+            <h5>Ваш кандидат на получение подарка</h5>
+            <h4 id="gifted"></h4>
+        </div>
+        
+    </main>
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+    $(document).ready(() => {
+        
+        if(localStorage.getItem('friend')) {
+            $('#gifted').html(localStorage.getItem('friend'));
+            $('form').hide();
+            $('.response').show();
+        }
+
+        const LoadingPhrases = [
+          'Ищем вашего кандидата',
+          'Отсеиваем уже занятых',
+          'Играемся с вашим Вконтакте',
+          'Ой спалились',
+          'Пишем смс вашей маме что вы курите',
+          'Шутка',
+          'Взламываем ваш телеграмм',
+          'Считываем ваши ключи шифрования',
+          'ФСБ нам заплатит 1 млн',
+          'Поиск завершен'
+        ];
+        
+       $('#showpass').click(() => {
+        const type = $('#password').attr('type');
+           if(type === 'password') {
+            $('#showpass').html('visibility_off')
+            $('#password').attr('type','text');
+           } else {
+            $('#showpass').html('visibility')
+            $('#password').attr('type','password')    
+           }
+       }) ;
+        
+      $('#send').click(function() {
+          const name = $('#name').val();
+          const secret = $('#password').val();
+          let i = 0;
+          const data = {
+              name: name,
+              secret: secret
+          }
+          $.ajax({
+              url:'/random',
+              type: 'POST', 
+              contentType: 'application/json',
+              data: JSON.stringify(data),
+              success: function(res) {
+                localStorage.setItem('friend', res.gifted);
+                $('.hidden').show();
+                $('form').hide();  
+                $('#gifted').html(res.gifted);
+                const interval = setInterval(() => {
+                    if(i >= LoadingPhrases.length) {
+                        $('.hidden').hide();
+                        $('.response').show();
+                        clearInterval(interval);
+                    }
+                    $('.phrase').html(LoadingPhrases[i]);
+                    console.log(i);
+                    i++;
+                }, 1000);
+              },
+              error: function(error) {
+                  $('.errors').html(error.responseJSON.message)
+              }
+          })
+      });
+    });
+</script>
+</body>
+</html>
